@@ -2,6 +2,7 @@ import { Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { apiGet, County, countyUrl } from "../api/client";
 import CountyMap from "../components/CountyMap";
+import { updateSeo } from "../lib/seo";
 
 export default function Home() {
   const [counties, setCounties] = useState<County[]>([]);
@@ -10,6 +11,27 @@ export default function Home() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    updateSeo({
+      title: "LocalEconomyData: U.S. County Jobs, Wages, GDP, Industries & Rankings",
+      description: "Explore local economic data for every U.S. county, including jobs, unemployment, wages, GDP, NAICS industries, location quotients, rankings, trends, and CSV downloads.",
+      path: "/",
+      jsonLd: [
+        {
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "LocalEconomyData",
+          url: "https://localeconomydata.com/",
+          description: "County economic data, rankings, industries, and downloadable local economy indicators."
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "LocalEconomyData",
+          url: "https://localeconomydata.com/",
+          logo: "https://localeconomydata.com/logo.png"
+        }
+      ]
+    });
     apiGet<County[]>("/api/counties").then((rows) => {
       setCounties(rows);
       setSelected(rows[0] ?? null);
@@ -70,6 +92,33 @@ export default function Home() {
               <div className="mt-2 text-lg font-semibold">{label}</div>
             </a>
           ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
+        <div>
+          <h2 className="text-2xl font-semibold text-ink">Frequently Asked Questions</h2>
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            {[
+              ["What does LocalEconomyData show?", "LocalEconomyData organizes county-level jobs, wages, unemployment, GDP, population, NAICS industry detail, location quotients, rankings, trends, and CSV downloads in one place."],
+              ["Where does the data come from?", "The platform is structured around public sources including BLS QCEW, BLS LAUS, Census ACS 5-Year, BEA Regional Accounts, and Census county geography."],
+              ["What is a location quotient?", "A location quotient compares a county's employment concentration in an industry with the national average. Values above 1.0 mean the industry is more concentrated locally."],
+              ["How should I use county rankings?", "Rankings help compare counties across common metrics such as wage levels, unemployment, employment growth, and industry concentration. Missing values are excluded from ranking calculations."],
+              ["Can I download the data?", "Yes. The download panel supports researcher-friendly CSV exports with county, NAICS, rank, source, and period fields."],
+              ["Why do data periods differ?", "Public economic datasets are released on different schedules. County pages show the latest loaded periods for BLS LAUS, BLS QCEW, Census ACS, and BEA data."]
+            ].map(([question, answer]) => (
+              <details key={question} className="rounded-lg border border-slate-200 bg-white p-5">
+                <summary className="cursor-pointer text-base font-semibold text-ink">{question}</summary>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{answer}</p>
+              </details>
+            ))}
+          </div>
+          <div className="mt-4 flex flex-wrap gap-3 text-sm font-semibold text-accent">
+            <a href="/guides/what-is-location-quotient">What is location quotient?</a>
+            <a href="/guides/what-are-naics-codes">What are NAICS codes?</a>
+            <a href="/methodology">Methodology</a>
+            <a href="/data-sources">Data Sources</a>
+          </div>
         </div>
       </section>
 

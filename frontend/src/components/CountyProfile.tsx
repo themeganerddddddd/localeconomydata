@@ -7,6 +7,7 @@ import LqTable from "./LqTable";
 import StateCountyMap from "./StateCountyMap";
 import StatCard from "./StatCard";
 import TrendChart from "./TrendChart";
+import { slugify } from "../lib/seo";
 
 export type CountyProfileData = {
   county: County;
@@ -72,6 +73,9 @@ export default function CountyProfile({ profile }: { profile: CountyProfileData 
     <main className="bg-slate-50/70 pb-10">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <header className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <nav className="mb-4 text-sm font-semibold text-slate-500">
+          <a href="/">Home</a> <span>/</span> <a href={`/state/${slugify(county.state_name)}`}>{county.state_name}</a> <span>/</span> <span>{county.county_name}</span>
+        </nav>
         <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{county.county_name}, {county.state_abbr} Economy</h1>
@@ -80,6 +84,7 @@ export default function CountyProfile({ profile }: { profile: CountyProfileData 
             <p className="mt-3 max-w-3xl text-slate-700">{profile.summary}</p>
             <p className="mt-3 text-sm font-semibold text-slate-700">{vintageLine}</p>
             <div className="mt-4 flex flex-wrap gap-3 text-sm font-semibold text-accent">
+              <a href={`/state/${slugify(county.state_name)}`}>{county.state_name} counties</a>
               <a href="/rankings/fastest-growing-counties">County rankings</a>
               <a href="/methodology">Methodology</a>
               <a href="/data-sources">Data sources</a>
@@ -231,13 +236,6 @@ export default function CountyProfile({ profile }: { profile: CountyProfileData 
             <a href="/methodology">Methodology</a>
             <a href="/data-sources">Data Sources</a>
           </div>
-          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Dataset",
-            name: `${county.county_name}, ${county.state_abbr} economy`,
-            description: profile.summary,
-            spatialCoverage: county.county_name
-          }) }} />
         </div>
       </section>
       </div>

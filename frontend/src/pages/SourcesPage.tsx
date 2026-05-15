@@ -1,4 +1,15 @@
+import { useEffect } from "react";
+import { updateSeo } from "../lib/seo";
+
 export default function SourcesPage() {
+  useEffect(() => {
+    updateSeo({
+      title: "Data Sources | LocalEconomyData",
+      description: "Learn about the public BLS QCEW, BLS LAUS, Census ACS, BEA Regional, and Census geography sources used by LocalEconomyData.",
+      path: "/data-sources"
+    });
+  }, []);
+
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <h1 className="text-3xl font-semibold">Data sources</h1>

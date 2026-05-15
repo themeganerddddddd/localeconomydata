@@ -82,3 +82,8 @@ export const countyUrl = (county: Pick<County, "county_name" | "state_abbr" | "f
   const slug = county.county_name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   return `/county/${county.state_abbr.toLowerCase()}/${slug}-${county.fips}`;
 };
+
+export const industryUrl = (industry: { industry_code: string; industry_title: string }) => {
+  const slug = industry.industry_title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return `/industry/${industry.industry_code}/${slug}`;
+};

@@ -7,8 +7,6 @@ export default function Footer() {
           <a href="/privacy">Privacy</a>
           <a href="/terms">Terms</a>
           <a href="/contact">Contact</a>
-          <a href="/methodology">Methodology</a>
-          <a href="/data-sources">Data Sources</a>
         </nav>
       </div>
     </footer>

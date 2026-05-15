@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiGet } from "../api/client";
 import CountyProfile, { CountyProfileData } from "../components/CountyProfile";
+import { slugify, updateSeo } from "../lib/seo";
 
 export default function CountyPage() {
   const fips = useMemo(() => window.location.pathname.match(/-(\d{5})$/)?.[1] ?? "", []);
@@ -12,8 +13,39 @@ export default function CountyPage() {
     apiGet<CountyProfileData>(`/api/counties/${fips}`)
       .then((data) => {
         setProfile(data);
-        document.title = `${data.county.county_name}, ${data.county.state_abbr} Economy: Jobs, Wages, GDP, Industries & Rankings`;
-        document.querySelector("meta[name='description']")?.setAttribute("content", `Explore ${data.county.county_name}, ${data.county.state_name} economic data including jobs, unemployment, wages, GDP, NAICS industries, location quotients, rankings, and trends.`);
+        const countyPath = `/county/${data.county.state_abbr.toLowerCase()}/${slugify(data.county.county_name)}-${data.county.fips}`;
+        updateSeo({
+          title: `${data.county.county_name}, ${data.county.state_abbr} Economy: Jobs, Wages, GDP, Industries & Rankings`,
+          description: `Explore ${data.county.county_name}, ${data.county.state_name} economic data including jobs, unemployment, wages, GDP, NAICS industries, location quotients, rankings, and trends.`,
+          path: countyPath,
+          jsonLd: [
+            {
+              "@context": "https://schema.org",
+              "@type": "Dataset",
+              name: `${data.county.county_name}, ${data.county.state_abbr} Economy`,
+              description: data.summary,
+              spatialCoverage: `${data.county.county_name}, ${data.county.state_name}`,
+              temporalCoverage: `${data.data_vintage.acs ?? "2014"}/${data.data_vintage.laus ?? "latest"}`,
+              publisher: { "@type": "Organization", name: "LocalEconomyData", url: "https://localeconomydata.com/" },
+              variableMeasured: ["unemployment rate", "employment", "wages", "GDP", "population", "location quotient"]
+            },
+            {
+              "@context": "https://schema.org",
+              "@type": "Place",
+              name: `${data.county.county_name}, ${data.county.state_abbr}`,
+              geo: { "@type": "GeoCoordinates", latitude: data.county.lat, longitude: data.county.lon }
+            },
+            {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: "https://localeconomydata.com/" },
+                { "@type": "ListItem", position: 2, name: data.county.state_name, item: `https://localeconomydata.com/state/${slugify(data.county.state_name)}` },
+                { "@type": "ListItem", position: 3, name: data.county.county_name, item: `https://localeconomydata.com${countyPath}` }
+              ]
+            }
+          ]
+        });
       })
       .catch((err) => setError(err.message));
   }, [fips]);

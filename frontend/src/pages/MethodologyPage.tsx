@@ -1,4 +1,15 @@
+import { useEffect } from "react";
+import { updateSeo } from "../lib/seo";
+
 export default function MethodologyPage() {
+  useEffect(() => {
+    updateSeo({
+      title: "Methodology | LocalEconomyData",
+      description: "Read the LocalEconomyData methodology for county rankings, location quotients, data vintages, missing data, and public source limitations.",
+      path: "/methodology"
+    });
+  }, []);
+
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 leading-7 text-slate-700">
       <h1 className="text-3xl font-semibold text-ink">Methodology</h1>

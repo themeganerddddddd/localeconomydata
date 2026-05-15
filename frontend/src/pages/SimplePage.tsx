@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { updateSeo } from "../lib/seo";
+
 const content = {
   privacy: {
     title: "Privacy",
@@ -15,6 +18,8 @@ const content = {
       "Data is provided for informational purposes only, with no warranty of completeness, timeliness, or accuracy.",
       "LocalEconomyData is not financial, legal, investment, or policy advice.",
       "Users should verify important figures with the original BLS, Census, BEA, or other source publications.",
+      "Public economic data can have release lags, revisions, suppression, estimation error, reporting gaps, and source-specific limitations.",
+      "LocalEconomyData is not affiliated with, endorsed by, or sponsored by the Bureau of Labor Statistics, U.S. Census Bureau, Bureau of Economic Analysis, or any government agency.",
       "Advertising, sponsorships, or affiliate links may appear on the site in the future. Sponsored or advertising content does not change the informational nature of the data and should not be treated as endorsement or professional advice.",
       "Users may not misuse the site, interfere with security or availability, scrape in a way that harms service performance, or present downloaded data in a misleading way."
     ]
@@ -29,6 +34,13 @@ const contactText = "For corrections, data questions, or partnership inquiries, 
 
 export default function SimplePage({ kind }: { kind: keyof typeof content }) {
   const page = content[kind];
+  useEffect(() => {
+    updateSeo({
+      title: `${page.title} | LocalEconomyData`,
+      description: `${page.title} information for LocalEconomyData.`,
+      path: `/${kind}`
+    });
+  }, [kind, page.title]);
   if (kind === "contact") {
     return (
       <main className="bg-slate-50/70">
