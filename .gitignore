@@ -20,5 +20,6 @@ backend/app/data/geo/
 # Environment and OS files
 .env
 .env.local
+frontend/.env.local
 Thumbs.db
 .DS_Store

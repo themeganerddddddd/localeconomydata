@@ -1,8 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "env": {
-    "VITE_API_BASE_URL": "/_/backend"
-  },
   "experimentalServices": {
     "frontend": {
       "entrypoint": "frontend",

@@ -46,12 +46,21 @@ npm install
 
 ```bash
 cd local-economy/backend
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8010
 ```
 
-The API runs at `http://127.0.0.1:8000`.
+The API runs at `http://127.0.0.1:8010`.
 
 ## Run Frontend
+
+Create a local frontend env file:
+
+```bash
+cd local-economy/frontend
+copy .env.local.example .env.local
+```
+
+Vite only exposes client-side environment variables prefixed with `VITE_`, so the variable must be named exactly `VITE_API_BASE_URL`.
 
 ```bash
 cd local-economy/frontend
@@ -59,6 +68,29 @@ npm run dev
 ```
 
 The app runs at `http://127.0.0.1:5173`.
+
+## Deploy Frontend To Vercel With Render Backend
+
+The FastAPI backend can run on Render while the Vite frontend runs on Vercel.
+
+In Vercel, go to:
+
+`Project -> Settings -> Environment Variables`
+
+Add:
+
+```text
+Name: VITE_API_BASE_URL
+Value: https://YOUR-RENDER-BACKEND.onrender.com
+```
+
+For this deployment, use:
+
+```text
+VITE_API_BASE_URL=https://localeconomydata.onrender.com
+```
+
+Then redeploy the Vercel frontend. Locally, keep `VITE_API_BASE_URL=http://127.0.0.1:8010` in `frontend/.env.local`.
 
 ## Update Data
 
