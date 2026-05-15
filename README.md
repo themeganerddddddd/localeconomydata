@@ -105,7 +105,7 @@ For this deployment, use:
 VITE_API_BASE_URL=https://localeconomydata.onrender.com
 ```
 
-Then redeploy the Vercel frontend. Locally, keep `VITE_API_BASE_URL=http://127.0.0.1:8010` in `frontend/.env.local`.
+Then redeploy the Vercel frontend. Locally, keep `VITE_API_BASE_URL=http://127.0.0.1:8010` in `frontend/.env.local`. The frontend trims trailing slashes, so both `https://localeconomydata.onrender.com` and `https://localeconomydata.onrender.com/` are accepted.
 
 Vercel environment variables only apply to deployments created after the variable is added or changed. If the browser console logs `API_BASE: http://127.0.0.1:8010` on the live site, redeploy the Vercel frontend and confirm the variable name is exactly `VITE_API_BASE_URL`.
 
