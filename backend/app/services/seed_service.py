@@ -66,3 +66,9 @@ def seed_database(force: bool = False) -> None:
 
     compute_lq()
     compute_rankings()
+    try:
+        from app.routes.counties import clear_county_route_cache
+
+        clear_county_route_cache()
+    except Exception:
+        pass

@@ -1,11 +1,19 @@
 from __future__ import annotations
 
+from functools import lru_cache
+
 from fastapi import APIRouter, HTTPException, Query
 
 from app.database import get_connection
 from app.services.naics import get_naics_digit_level
 
 router = APIRouter(prefix="/api/counties", tags=["counties"])
+
+
+def clear_county_route_cache() -> None:
+    _list_counties_cached.cache_clear()
+    _county_profile_cached.cache_clear()
+    _county_industries_cached.cache_clear()
 
 
 def row_to_dict(row):
@@ -20,6 +28,11 @@ def pct_change(latest: float | int | None, previous: float | int | None) -> floa
 
 @router.get("")
 def list_counties():
+    return _list_counties_cached()
+
+
+@lru_cache(maxsize=1)
+def _list_counties_cached():
     with get_connection() as conn:
         rows = conn.execute(
             """
@@ -58,6 +71,11 @@ def list_counties():
 
 @router.get("/{fips}")
 def county_profile(fips: str):
+    return _county_profile_cached(fips.zfill(5))
+
+
+@lru_cache(maxsize=512)
+def _county_profile_cached(fips: str):
     with get_connection() as conn:
         county = conn.execute("SELECT * FROM counties WHERE fips = ?", (fips,)).fetchone()
         if not county:
@@ -140,8 +158,16 @@ def county_industries(
         raise HTTPException(status_code=400, detail="Invalid sort_by")
     if level not in {"all", "2", "3", "4", "5", "6", "sector_range"}:
         raise HTTPException(status_code=400, detail="Invalid NAICS level")
+    if year is None and quarter is None:
+        return _county_industries_cached(fips.zfill(5), sort_by, level, limit)
     with get_connection() as conn:
-        return [row_to_dict(row) for row in _industry_rows(conn, fips, sort_by, limit, year, quarter, level)]
+        return [row_to_dict(row) for row in _industry_rows(conn, fips.zfill(5), sort_by, limit, year, quarter, level)]
+
+
+@lru_cache(maxsize=2048)
+def _county_industries_cached(fips: str, sort_by: str, level: str, limit: int):
+    with get_connection() as conn:
+        return [row_to_dict(row) for row in _industry_rows(conn, fips, sort_by, limit, None, None, level)]
 
 
 @router.get("/{fips}/trends")
@@ -156,7 +182,7 @@ def _industry_rows(conn, fips: str, sort_by: str, limit: int, year: int | None =
     sort_column = {
         "employment": "q.employment",
         "wage": "q.avg_weekly_wage",
-        "lq": "q.lq",
+        "lq": "l.lq",
         "growth": "growth",
     }[sort_by]
     if year is None or quarter is None:
@@ -166,7 +192,7 @@ def _industry_rows(conn, fips: str, sort_by: str, limit: int, year: int | None =
         ).fetchone()
         year = year or (latest["year"] if latest else 2024)
         quarter = quarter or (latest["quarter"] if latest else "Annual")
-    params: list = [year, quarter, fips]
+    params: list = [fips, year, quarter]
     date_filter = ""
     if level != "all":
         if level == "sector_range":
@@ -177,38 +203,75 @@ def _industry_rows(conn, fips: str, sort_by: str, limit: int, year: int | None =
     params.append(limit)
     return conn.execute(
         f"""
-        WITH latest AS (
-            SELECT q.*, c.state_abbr, total.employment AS total_employment, l.lq
-            FROM county_qcew q
-            JOIN counties c ON c.fips = q.fips
-            JOIN county_qcew total ON total.fips = q.fips AND total.year = q.year AND total.quarter = q.quarter AND total.industry_code = '10'
-            LEFT JOIN industry_lq l ON l.fips = q.fips AND l.industry_code = q.industry_code AND l.year = q.year AND l.quarter = q.quarter
-            WHERE q.year = ? AND q.quarter = ? AND q.industry_code <> '10'
-        ),
-        ranked AS (
-            SELECT latest.*,
-                   DENSE_RANK() OVER (PARTITION BY industry_code ORDER BY employment DESC) AS employment_national_rank,
-                   DENSE_RANK() OVER (PARTITION BY industry_code, state_abbr ORDER BY employment DESC) AS employment_state_rank,
-                   DENSE_RANK() OVER (PARTITION BY industry_code ORDER BY lq DESC) AS lq_national_rank,
-                   DENSE_RANK() OVER (PARTITION BY industry_code, state_abbr ORDER BY lq DESC) AS lq_state_rank,
-                   COUNT(lq) OVER (PARTITION BY industry_code) AS lq_national_denominator,
-                   COUNT(lq) OVER (PARTITION BY industry_code, state_abbr) AS lq_state_denominator
-            FROM latest
-            WHERE lq IS NOT NULL
-        )
         SELECT q.fips, q.year, q.quarter, q.industry_code, q.industry_title, q.establishments,
-               q.employment, q.avg_weekly_wage, q.lq,
+               q.employment, q.avg_weekly_wage, l.lq,
                CASE WHEN INSTR(q.industry_code, '-') > 0 THEN 'sector_range' ELSE CAST(LENGTH(q.industry_code) AS TEXT) END AS naics_digit_level,
-               q.employment_national_rank, q.employment_state_rank,
-               q.lq_national_rank, q.lq_state_rank,
-               q.lq_national_denominator, q.lq_state_denominator,
+               (
+                   SELECT COUNT(DISTINCT q2.employment) + 1
+                   FROM county_qcew q2
+                   WHERE q2.industry_code = q.industry_code
+                     AND q2.year = q.year
+                     AND q2.quarter = q.quarter
+                     AND q2.employment > q.employment
+               ) AS employment_national_rank,
+               (
+                   SELECT COUNT(DISTINCT q2.employment) + 1
+                   FROM county_qcew q2
+                   JOIN counties c2 ON c2.fips = q2.fips
+                   WHERE q2.industry_code = q.industry_code
+                     AND q2.year = q.year
+                     AND q2.quarter = q.quarter
+                     AND c2.state_abbr = c.state_abbr
+                     AND q2.employment > q.employment
+               ) AS employment_state_rank,
+               CASE WHEN l.lq IS NULL THEN NULL ELSE (
+                   SELECT COUNT(DISTINCT l2.lq) + 1
+                   FROM industry_lq l2
+                   WHERE l2.industry_code = q.industry_code
+                     AND l2.year = q.year
+                     AND l2.quarter = q.quarter
+                     AND l2.lq > l.lq
+               ) END AS lq_national_rank,
+               CASE WHEN l.lq IS NULL THEN NULL ELSE (
+                   SELECT COUNT(DISTINCT l2.lq) + 1
+                   FROM industry_lq l2
+                   JOIN counties c2 ON c2.fips = l2.fips
+                   WHERE l2.industry_code = q.industry_code
+                     AND l2.year = q.year
+                     AND l2.quarter = q.quarter
+                     AND c2.state_abbr = c.state_abbr
+                     AND l2.lq > l.lq
+               ) END AS lq_state_rank,
+               (
+                   SELECT COUNT(l2.lq)
+                   FROM industry_lq l2
+                   WHERE l2.industry_code = q.industry_code
+                     AND l2.year = q.year
+                     AND l2.quarter = q.quarter
+               ) AS lq_national_denominator,
+               (
+                   SELECT COUNT(l2.lq)
+                   FROM industry_lq l2
+                   JOIN counties c2 ON c2.fips = l2.fips
+                   WHERE l2.industry_code = q.industry_code
+                     AND l2.year = q.year
+                     AND l2.quarter = q.quarter
+                     AND c2.state_abbr = c.state_abbr
+               ) AS lq_state_denominator,
                ROUND(100.0 * q.employment / NULLIF(q.total_employment, 0), 2) AS employment_share,
                ROUND(100.0 * (q.employment - prev.employment) / NULLIF(prev.employment, 0), 2) AS growth,
                ROUND(100.0 * (q.avg_weekly_wage - prev.avg_weekly_wage) / NULLIF(prev.avg_weekly_wage, 0), 2) AS wage_growth,
                q.year || ' ' || q.quarter AS latest_period
-        FROM ranked q
+        FROM (
+            SELECT q.*, total.employment AS total_employment
+            FROM county_qcew q
+            JOIN county_qcew total ON total.fips = q.fips AND total.year = q.year AND total.quarter = q.quarter AND total.industry_code = '10'
+            WHERE q.fips = ? AND q.year = ? AND q.quarter = ? AND q.industry_code <> '10'
+        ) q
+        JOIN counties c ON c.fips = q.fips
+        LEFT JOIN industry_lq l ON l.fips = q.fips AND l.industry_code = q.industry_code AND l.year = q.year AND l.quarter = q.quarter
         LEFT JOIN county_qcew prev ON prev.fips = q.fips AND prev.industry_code = q.industry_code AND prev.year = q.year - 1
-        WHERE q.fips = ? {date_filter}
+        WHERE 1 = 1 {date_filter}
         ORDER BY {sort_column} DESC NULLS LAST
         LIMIT ?
         """,
