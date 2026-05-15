@@ -6,7 +6,9 @@ from pathlib import Path
 # Seed values are representative MVP data, not official published observations.
 # The ingestion modules are structured to replace this with full public-source pulls.
 
-RAW_DIR = Path(__file__).resolve().parent / "data" / "raw"
+DATA_DIR = Path(__file__).resolve().parent / "data"
+RAW_DIR = DATA_DIR / "raw"
+REFERENCE_DIR = DATA_DIR / "reference"
 
 STATE_NAMES = {
     "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas", "CA": "California",
@@ -87,7 +89,9 @@ BASE_COUNTIES.extend(
 
 def _extend_counties_from_gazetteer() -> None:
     """Load every U.S. county name/FIPS from the cached Census gazetteer when present."""
-    gazetteer_path = RAW_DIR / "2024_Gaz_counties_national.txt"
+    gazetteer_path = REFERENCE_DIR / "2024_Gaz_counties_national.txt"
+    if not gazetteer_path.exists():
+        gazetteer_path = RAW_DIR / "2024_Gaz_counties_national.txt"
     if not gazetteer_path.exists():
         return
 

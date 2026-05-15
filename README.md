@@ -2,7 +2,7 @@
 
 LocalEconomyData is a county-first local economic data platform: a simpler Bloomberg/FRED/Our World in Data style interface for U.S. county employment, wages, unemployment, industries, rankings, trends, and exports.
 
-The MVP uses a seeded dataset for 54 counties, including all seeded Maryland counties, major DC-area counties/cities, and major counties in CA, FL, NY, IL, TX, WA, GA, PA, MA, AZ, NC, LA, and more. Examples:
+The MVP uses a generated county dataset for all U.S. counties from the Census county gazetteer, with representative seeded economic histories and NAICS industry rows. A smaller curated set of counties has hand-tuned values, while the remaining counties use deterministic placeholder values until the production BLS/Census/BEA ingestion jobs are connected. Examples:
 
 - Montgomery County, MD
 - Fairfax County, VA
@@ -18,7 +18,7 @@ The MVP uses a seeded dataset for 54 counties, including all seeded Maryland cou
 - King County, WA
 - Miami-Dade County, FL
 
-It is structured so full U.S. county ingestion can be added next.
+It is structured so official full U.S. county ingestion can replace the generated placeholder rows source by source.
 
 ## Stack
 

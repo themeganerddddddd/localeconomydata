@@ -4,12 +4,14 @@ from app.database import get_connection, init_db
 from app.services.lq_service import compute_lq
 from app.services.rankings_service import compute_rankings
 
+MIN_FULL_COUNTY_COUNT = 3_000
+
 
 def seed_database(force: bool = False) -> None:
     init_db()
     with get_connection() as conn:
         existing = conn.execute("SELECT COUNT(*) AS count FROM counties").fetchone()["count"]
-        if existing and not force:
+        if existing >= MIN_FULL_COUNTY_COUNT and not force:
             return
 
         from app.sample_data import ACS, BEA, COUNTIES, LAUS, QCEW
