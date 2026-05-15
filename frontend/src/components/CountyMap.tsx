@@ -124,7 +124,7 @@ export default function CountyMap({ counties, selected, onSelect }: Props) {
               <div className="text-slate-500">{fmt(Number(hovered[metric]), metric.includes("growth") || metric === "unemployment_rate" ? "pct" : metric === "avg_weekly_wage" || metric === "gdp" ? "money" : "number")}</div>
             </div>
           )}
-          <div className="absolute left-3 top-3 z-10 flex items-center gap-1 rounded-md border border-slate-200 bg-white/90 p-1 shadow-sm">
+          <div className="absolute right-3 top-3 z-10 flex items-center gap-1 rounded-md border border-slate-200 bg-white/90 p-1 shadow-sm">
             <button className="h-7 w-7 rounded border border-slate-300 bg-white text-sm font-semibold" aria-label="Zoom in" onClick={() => zoom(0.72)}>+</button>
             <button className="h-7 w-7 rounded border border-slate-300 bg-white text-sm font-semibold" aria-label="Zoom out" onClick={() => zoom(1.28)}>-</button>
             <button className="rounded border border-slate-300 bg-white px-2 py-1 text-xs font-semibold" onClick={() => setViewBox({ x: 0, y: 0, width: 100, height: 62 })}>Reset</button>
