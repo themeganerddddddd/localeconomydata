@@ -5,9 +5,25 @@ import IndustryTable from "../components/IndustryTable";
 export default function IndustryPage() {
   const code = useMemo(() => window.location.pathname.split("/")[2] ?? "541", []);
   const [profile, setProfile] = useState<any | null>(null);
+  const [error, setError] = useState("");
   useEffect(() => {
-    apiGet(`/api/industries/${code}`).then(setProfile);
+    apiGet(`/api/industries/${code}`)
+      .then((data) => {
+        setProfile(data);
+        setError("");
+      })
+      .catch((err) => setError(err.message));
   }, [code]);
+  if (error) {
+    return (
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="font-semibold">Could not load industry data.</div>
+          <div className="mt-1 whitespace-pre-wrap break-words">{error}</div>
+        </div>
+      </main>
+    );
+  }
   if (!profile) return <div className="p-8">Loading industry...</div>;
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

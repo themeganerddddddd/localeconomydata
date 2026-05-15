@@ -3,6 +3,7 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8010";
 
 export { API_BASE };
+console.log("API_BASE:", API_BASE);
 
 export type County = {
   fips: string;
@@ -26,10 +27,55 @@ export type County = {
   wage_state_rank?: number | null;
 };
 
+export class ApiError extends Error {
+  url: string;
+  status?: number;
+  statusText?: string;
+  responseText?: string;
+
+  constructor(message: string, details: { url: string; status?: number; statusText?: string; responseText?: string }) {
+    super(message);
+    this.name = "ApiError";
+    this.url = details.url;
+    this.status = details.status;
+    this.statusText = details.statusText;
+    this.responseText = details.responseText;
+  }
+}
+
+export const apiUrl = (path: string) => `${API_BASE}${path}`;
+
+const formatApiError = (error: unknown) => (error instanceof Error ? error.message : String(error));
+
 export async function apiGet<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`);
-  if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
-  return response.json();
+  const url = apiUrl(path);
+  let response: Response;
+  try {
+    response = await fetch(url);
+  } catch (error) {
+    throw new ApiError(`Network error requesting ${url}: ${formatApiError(error)}`, { url });
+  }
+
+  const responseText = await response.text();
+  if (!response.ok) {
+    throw new ApiError(`API request failed: ${response.status} ${response.statusText} at ${url}${responseText ? ` - ${responseText.slice(0, 500)}` : ""}`, {
+      url,
+      status: response.status,
+      statusText: response.statusText,
+      responseText
+    });
+  }
+
+  try {
+    return (responseText ? JSON.parse(responseText) : null) as T;
+  } catch (error) {
+    throw new ApiError(`Invalid JSON from ${url}: ${formatApiError(error)}`, {
+      url,
+      status: response.status,
+      statusText: response.statusText,
+      responseText
+    });
+  }
 }
 
 export const countyUrl = (county: Pick<County, "county_name" | "state_abbr" | "fips">) => {

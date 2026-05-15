@@ -7,12 +7,14 @@ export default function Home() {
   const [counties, setCounties] = useState<County[]>([]);
   const [selected, setSelected] = useState<County | null>(null);
   const [query, setQuery] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     apiGet<County[]>("/api/counties").then((rows) => {
       setCounties(rows);
       setSelected(rows[0] ?? null);
-    });
+      setError("");
+    }).catch((err) => setError(err.message));
   }, []);
 
   const matches = useMemo(() => {
@@ -45,6 +47,12 @@ export default function Home() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        {error && (
+          <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            <div className="font-semibold">Could not load county data.</div>
+            <div className="mt-1 whitespace-pre-wrap break-words">{error}</div>
+          </div>
+        )}
         <CountyMap counties={counties} selected={selected} onSelect={setSelected} />
       </section>
 

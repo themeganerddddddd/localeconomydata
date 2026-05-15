@@ -1,6 +1,6 @@
 import { Download, Lock } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { apiGet, County } from "../api/client";
+import { apiGet, apiUrl, County } from "../api/client";
 
 export default function DownloadPanel({ fips }: { fips: string }) {
   const [locked, setLocked] = useState(false);
@@ -25,7 +25,7 @@ export default function DownloadPanel({ fips }: { fips: string }) {
     if (naicsCode) params.set("naics_code", naicsCode);
     if (year) params.set("year", year);
     const query = params.toString();
-    return `/api/export/csv${query ? `?${query}` : ""}`;
+    return apiUrl(`/api/export/csv${query ? `?${query}` : ""}`);
   }, [countyFips, state, naicsLevel, naicsCode, year]);
 
   return (

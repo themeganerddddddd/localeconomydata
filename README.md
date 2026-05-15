@@ -73,6 +73,21 @@ The app runs at `http://127.0.0.1:5173`.
 
 The FastAPI backend can run on Render while the Vite frontend runs on Vercel.
 
+Render backend settings:
+
+```text
+Root Directory: backend
+Start Command: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+After Render deploys, verify:
+
+```text
+https://YOUR-RENDER-BACKEND.onrender.com/health
+https://YOUR-RENDER-BACKEND.onrender.com/docs
+https://YOUR-RENDER-BACKEND.onrender.com/api/counties
+```
+
 In Vercel, go to:
 
 `Project -> Settings -> Environment Variables`
@@ -91,6 +106,14 @@ VITE_API_BASE_URL=https://localeconomydata.onrender.com
 ```
 
 Then redeploy the Vercel frontend. Locally, keep `VITE_API_BASE_URL=http://127.0.0.1:8010` in `frontend/.env.local`.
+
+Vercel environment variables only apply to deployments created after the variable is added or changed. If the browser console logs `API_BASE: http://127.0.0.1:8010` on the live site, redeploy the Vercel frontend and confirm the variable name is exactly `VITE_API_BASE_URL`.
+
+If the frontend uses a custom domain, add it to the backend CORS allowlist through the `FRONTEND_ORIGINS` environment variable on Render as a comma-separated list, for example:
+
+```text
+FRONTEND_ORIGINS=https://your-vercel-project.vercel.app,https://yourdomain.com,https://www.yourdomain.com
+```
 
 ## Update Data
 

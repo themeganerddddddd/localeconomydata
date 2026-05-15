@@ -18,7 +18,16 @@ export default function CountyPage() {
       .catch((err) => setError(err.message));
   }, [fips]);
 
-  if (error) return <div className="p-8 text-red-700">{error}</div>;
+  if (error) {
+    return (
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="font-semibold">Could not load county profile.</div>
+          <div className="mt-1 whitespace-pre-wrap break-words">{error}</div>
+        </div>
+      </main>
+    );
+  }
   if (!profile) return <div className="p-8 text-slate-600">Loading county profile...</div>;
   return <CountyProfile profile={profile} />;
 }

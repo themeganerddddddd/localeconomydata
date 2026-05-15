@@ -33,6 +33,7 @@ export default function CountyProfile({ profile }: { profile: CountyProfileData 
   const [industrySearch, setIndustrySearch] = useState("");
   const [showAllIndustries, setShowAllIndustries] = useState(false);
   const [industries, setIndustries] = useState(profile.top_industries);
+  const [industryError, setIndustryError] = useState("");
 
   const rankings = useMemo(() => new Map(profile.rankings.map((ranking) => [ranking.metric, ranking])), [profile.rankings]);
   const rankLine = (metric: string, scope: "national" | "state") => {
@@ -54,7 +55,12 @@ export default function CountyProfile({ profile }: { profile: CountyProfileData 
   }, [county, features]);
 
   useEffect(() => {
-    apiGet<any[]>(`/api/counties/${county.fips}/industries?level=${level}&limit=250`).then(setIndustries);
+    apiGet<any[]>(`/api/counties/${county.fips}/industries?level=${level}&limit=250`)
+      .then((rows) => {
+        setIndustries(rows);
+        setIndustryError("");
+      })
+      .catch((err) => setIndustryError(err.message));
   }, [county.fips, level]);
 
   const filteredIndustries = industries.filter((row) => `${row.industry_code} ${row.industry_title}`.toLowerCase().includes(industrySearch.toLowerCase()));
@@ -196,6 +202,12 @@ export default function CountyProfile({ profile }: { profile: CountyProfileData 
           </div>
         </div>
         <div className="mt-4">
+          {industryError && (
+            <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+              <div className="font-semibold">Could not load the selected industry detail.</div>
+              <div className="mt-1 whitespace-pre-wrap break-words">{industryError}</div>
+            </div>
+          )}
           <IndustryTable rows={visibleIndustries} />
         </div>
         {filteredIndustries.length > 20 && <button className="mt-3 rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold" onClick={() => setShowAllIndustries((value) => !value)}>{showAllIndustries ? "Show fewer" : `Show all ${filteredIndustries.length} industries`}</button>}

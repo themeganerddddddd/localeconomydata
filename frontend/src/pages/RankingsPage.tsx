@@ -11,13 +11,25 @@ const metricFromPath = (path: string) => {
 export default function RankingsPage() {
   const metric = useMemo(() => metricFromPath(window.location.pathname), []);
   const [rows, setRows] = useState<any[]>([]);
+  const [error, setError] = useState("");
   useEffect(() => {
-    apiGet<{ rows: any[] }>(`/api/rankings?metric=${metric}&limit=50`).then((data) => setRows(data.rows));
+    apiGet<{ rows: any[] }>(`/api/rankings?metric=${metric}&limit=50`)
+      .then((data) => {
+        setRows(data.rows);
+        setError("");
+      })
+      .catch((err) => setError(err.message));
   }, [metric]);
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       <h1 className="text-3xl font-semibold">County rankings</h1>
       <p className="mt-2 text-slate-600">Ranked by {metric.replace(/_/g, " ")} across loaded U.S. counties. Select a county to open its economy profile.</p>
+      {error && (
+        <div className="mt-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="font-semibold">Could not load rankings.</div>
+          <div className="mt-1 whitespace-pre-wrap break-words">{error}</div>
+        </div>
+      )}
       <div className="mt-6 overflow-hidden rounded-md border border-slate-200 bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
