@@ -1,4 +1,4 @@
-import { CountyFeature, countyFips, featureRings, isLonLat, projectLonLat } from "../data/geo";
+import { CountyFeature, countyFips, featureRings, geometryFipsForDataFips, isLonLat, projectLonLat } from "../data/geo";
 
 type Props = {
   fips: string;
@@ -15,7 +15,7 @@ function collectProjectedPoints(featureItem: CountyFeature) {
 }
 
 export default function CountyShapePreview({ fips, features, width = 220, height = 140, className = "" }: Props) {
-  const shape = features.find((item) => countyFips(item) === fips);
+  const shape = features.find((item) => countyFips(item) === geometryFipsForDataFips(fips));
   if (!shape) {
     return (
       <div className={`grid place-items-center rounded-md border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-400 ${className}`} style={{ width, height }}>

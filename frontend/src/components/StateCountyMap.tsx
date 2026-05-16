@@ -1,6 +1,6 @@
 import { PointerEvent, WheelEvent, useEffect, useMemo, useRef, useState } from "react";
 import { County, countyUrl } from "../api/client";
-import { CountyFeature, countyFips, featureCenter, featureRings, isLonLat, projectLonLat, syntheticCountyFeature } from "../data/geo";
+import { CountyFeature, countyFips, featureCenter, featureRings, geometryFipsForDataFips, isLonLat, projectLonLat, syntheticCountyFeature } from "../data/geo";
 
 const STATE_FIPS: Record<string, string> = {
   AL: "01", AK: "02", AZ: "04", AR: "05", CA: "06", CO: "08", CT: "09", DE: "10",
@@ -40,11 +40,15 @@ export default function StateCountyMap({
   countiesData?: County[];
 }) {
   const statePrefix = STATE_FIPS[stateAbbr];
-  const countyByFips = new Map(countiesData.map((county) => [county.fips, county]));
+  const countyByFips = new Map<string, County>();
+  countiesData.forEach((county) => {
+    countyByFips.set(county.fips, county);
+    countyByFips.set(geometryFipsForDataFips(county.fips), county);
+  });
   const stateFeatures = features.filter((feature) => countyFips(feature).startsWith(statePrefix ?? ""));
   const atlasFips = new Set(stateFeatures.map(countyFips));
   const missingLoadedFeatures = countiesData
-    .filter((county) => !atlasFips.has(county.fips))
+    .filter((county) => !atlasFips.has(geometryFipsForDataFips(county.fips)))
     .map((county) => syntheticCountyFeature(county.fips, county.lon, county.lat));
   const renderFeatures = stateFeatures.length ? [...stateFeatures, ...missingLoadedFeatures] : countiesData.map((county) => ({
     type: "Feature" as const,

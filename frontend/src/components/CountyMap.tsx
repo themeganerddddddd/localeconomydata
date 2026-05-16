@@ -1,7 +1,7 @@
 import { PointerEvent, WheelEvent, useEffect, useMemo, useRef, useState } from "react";
 import { County, countyUrl } from "../api/client";
 import CountyShapePreview from "./CountyShapePreview";
-import { CountyFeature, countyFips, featureCenter, featureRings, loadCountyFeatures, ringToPoints, syntheticCountyFeature } from "../data/geo";
+import { CountyFeature, countyFips, featureCenter, featureRings, geometryFipsForDataFips, loadCountyFeatures, ringToPoints, syntheticCountyFeature } from "../data/geo";
 
 type Props = {
   counties: County[];
@@ -18,7 +18,14 @@ export default function CountyMap({ counties, selected, onSelect }: Props) {
   const dragMovedRef = useRef(false);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const pinchDistance = useRef<number | null>(null);
-  const countiesByFips = useMemo(() => new Map(counties.map((county) => [county.fips, county])), [counties]);
+  const countiesByFips = useMemo(() => {
+    const map = new Map<string, County>();
+    for (const county of counties) {
+      map.set(county.fips, county);
+      map.set(geometryFipsForDataFips(county.fips), county);
+    }
+    return map;
+  }, [counties]);
   const values = counties.map((county) => Number(county[metric])).filter((value) => Number.isFinite(value));
   const min = Math.min(...values);
   const max = Math.max(...values);
@@ -30,7 +37,7 @@ export default function CountyMap({ counties, selected, onSelect }: Props) {
   const mapFeatures = useMemo(() => {
     const seen = new Set(features.map(countyFips));
     const missing = counties
-      .filter((county) => !seen.has(county.fips))
+      .filter((county) => !seen.has(geometryFipsForDataFips(county.fips)))
       .map((county) => syntheticCountyFeature(county.fips, county.lon, county.lat));
     return [...features, ...missing];
   }, [counties, features]);

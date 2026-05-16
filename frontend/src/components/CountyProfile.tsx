@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiGet, County } from "../api/client";
-import { CountyFeature, countyFips, loadCountyFeatures, syntheticCountyFeature } from "../data/geo";
+import { CountyFeature, countyFips, geometryFipsForDataFips, loadCountyFeatures, syntheticCountyFeature } from "../data/geo";
 import DownloadPanel from "./DownloadPanel";
 import IndustryTable from "./IndustryTable";
 import LqTable from "./LqTable";
@@ -51,7 +51,7 @@ export default function CountyProfile({ profile }: { profile: CountyProfileData 
   }, []);
 
   const shapeFeatures = useMemo(() => {
-    if (features.some((feature) => countyFips(feature) === county.fips)) return features;
+    if (features.some((feature) => countyFips(feature) === geometryFipsForDataFips(county.fips))) return features;
     return [...features, syntheticCountyFeature(county.fips, county.lon, county.lat)];
   }, [county, features]);
 

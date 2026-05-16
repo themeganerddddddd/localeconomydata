@@ -19,6 +19,22 @@ export type FeatureCollection = {
 const LOCAL_ATLAS_URL = "/counties-10m.json";
 const ATLAS_URL = "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-10m.json";
 
+// Census replaced Connecticut's legacy counties with planning-region FIPS in
+// newer tabular files. The bundled us-atlas county topology still contains the
+// legacy county polygons, so these aliases let current 091xx rows draw real
+// Connecticut county shapes instead of falling back to synthetic markers.
+const CONNECTICUT_GEOMETRY_ALIASES: Record<string, string> = {
+  "09110": "09003",
+  "09120": "09001",
+  "09130": "09007",
+  "09140": "09009",
+  "09150": "09015",
+  "09160": "09005",
+  "09170": "09009",
+  "09180": "09011",
+  "09190": "09001"
+};
+
 export async function loadCountyFeatures(): Promise<FeatureCollection> {
   try {
     const response = await fetch(LOCAL_ATLAS_URL);
@@ -53,6 +69,10 @@ export async function loadCountyFeatures(): Promise<FeatureCollection> {
 
 export function countyFips(featureItem: CountyFeature): string {
   return String(featureItem.properties.fips ?? featureItem.id ?? "").padStart(5, "0");
+}
+
+export function geometryFipsForDataFips(fips: string): string {
+  return CONNECTICUT_GEOMETRY_ALIASES[fips] ?? fips;
 }
 
 export function projectLonLat([lon, lat]: number[], width = 100, height = 62): [number, number] {
