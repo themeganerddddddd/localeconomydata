@@ -1,6 +1,6 @@
 import { PointerEvent, WheelEvent, useEffect, useMemo, useRef, useState } from "react";
 import { County, countyUrl } from "../api/client";
-import { CountyFeature, countyFips, featureRings, isLonLat, projectLonLat, syntheticCountyFeature } from "../data/geo";
+import { CountyFeature, countyFips, featureCenter, featureRings, isLonLat, projectLonLat, syntheticCountyFeature } from "../data/geo";
 
 const STATE_FIPS: Record<string, string> = {
   AL: "01", AK: "02", AZ: "04", AR: "05", CA: "06", CO: "08", CT: "09", DE: "10",
@@ -154,12 +154,18 @@ export default function StateCountyMap({
           const fips = countyFips(feature);
           const county = countyByFips.get(fips);
           const selected = fips === selectedFips;
+          const synthetic = "synthetic" in feature.properties && feature.properties.synthetic;
+          const center = projectedRing([featureCenter(feature)])[0];
           return (
             <a key={fips} href={county ? countyUrl(county) : undefined} className={county ? "cursor-pointer" : ""}>
-              {featureRings(feature).map((ring, index) => {
-                const points = projectedRing(ring).map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
-                return <polygon key={index} points={points} fill={selected ? "#2563eb" : county ? "#dbeafe" : "#f1f5f9"} stroke={selected ? "#0f172a" : "#94a3b8"} strokeWidth={selected ? "1.2" : "0.45"} />;
-              })}
+              {synthetic ? (
+                <circle cx={center[0]} cy={center[1]} r={selected ? 2.2 : 1.5} fill={selected ? "#2563eb" : county ? "#dbeafe" : "#f1f5f9"} stroke={selected ? "#0f172a" : "#64748b"} strokeWidth={selected ? "0.7" : "0.4"} />
+              ) : (
+                featureRings(feature).map((ring, index) => {
+                  const points = projectedRing(ring).map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
+                  return <polygon key={index} points={points} fill={selected ? "#2563eb" : county ? "#dbeafe" : "#f1f5f9"} stroke={selected ? "#0f172a" : "#94a3b8"} strokeWidth={selected ? "1.2" : "0.45"} />;
+                })
+              )}
               <title>{county ? `${county.county_name}, ${county.state_abbr}` : "County not loaded"}</title>
             </a>
           );

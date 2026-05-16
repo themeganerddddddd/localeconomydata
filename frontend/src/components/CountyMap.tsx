@@ -1,7 +1,7 @@
 import { PointerEvent, WheelEvent, useEffect, useMemo, useRef, useState } from "react";
 import { County, countyUrl } from "../api/client";
 import CountyShapePreview from "./CountyShapePreview";
-import { CountyFeature, countyFips, featureRings, loadCountyFeatures, ringToPoints, syntheticCountyFeature } from "../data/geo";
+import { CountyFeature, countyFips, featureCenter, featureRings, loadCountyFeatures, ringToPoints, syntheticCountyFeature } from "../data/geo";
 
 type Props = {
   counties: County[];
@@ -147,6 +147,8 @@ export default function CountyMap({ counties, selected, onSelect }: Props) {
             const fips = countyFips(feature);
             const county = countiesByFips.get(fips);
             const active = selected?.fips === fips;
+            const synthetic = feature.properties.synthetic;
+            const [cx, cy] = featureCenter(feature);
             return (
               <g
                 key={fips}
@@ -155,9 +157,13 @@ export default function CountyMap({ counties, selected, onSelect }: Props) {
                 onMouseLeave={() => setHovered(null)}
                 className={county ? "cursor-pointer" : ""}
               >
-                {featureRings(feature).map((ring, index) => (
-                  <polygon key={index} points={ringToPoints(ring)} fill={active ? "#0f172a" : fillFor(county)} stroke={active ? "#0f172a" : "#ffffff"} strokeWidth={active ? "0.11" : "0.035"} />
-                ))}
+                {synthetic ? (
+                  <circle cx={cx} cy={cy} r={active ? 0.18 : 0.12} fill={active ? "#0f172a" : fillFor(county)} stroke={active ? "#0f172a" : "#64748b"} strokeWidth={active ? "0.05" : "0.025"} />
+                ) : (
+                  featureRings(feature).map((ring, index) => (
+                    <polygon key={index} points={ringToPoints(ring)} fill={active ? "#0f172a" : fillFor(county)} stroke={active ? "#0f172a" : "#ffffff"} strokeWidth={active ? "0.11" : "0.035"} />
+                  ))
+                )}
                 <title>{county ? `${county.county_name}, ${county.state_abbr}` : "County data not loaded"}</title>
               </g>
             );

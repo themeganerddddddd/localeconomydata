@@ -4,7 +4,7 @@ import fallbackGeo from "./seed_counties.json";
 export type CountyFeature = {
   type: "Feature";
   id?: string | number;
-  properties: { fips?: string; name?: string; [key: string]: unknown };
+  properties: { fips?: string; name?: string; synthetic?: boolean; [key: string]: unknown };
   geometry: {
     type: "Polygon" | "MultiPolygon";
     coordinates: number[][][] | number[][][][];
@@ -172,13 +172,23 @@ export function featureRings(featureItem: CountyFeature): number[][][] {
   return (featureItem.geometry.coordinates as number[][][][]).flat();
 }
 
+export function featureCenter(featureItem: CountyFeature): [number, number] {
+  const points = featureRings(featureItem).flat();
+  const xs = points.map((point) => point[0]);
+  const ys = points.map((point) => point[1]);
+  return [
+    xs.reduce((sum, value) => sum + value, 0) / Math.max(xs.length, 1),
+    ys.reduce((sum, value) => sum + value, 0) / Math.max(ys.length, 1)
+  ];
+}
+
 export function syntheticCountyFeature(fips: string, lon: number, lat: number): CountyFeature {
   const [x, y] = projectLonLat([lon, lat]);
-  const size = 0.75;
+  const size = 0.16;
   return {
     type: "Feature",
     id: fips,
-    properties: { fips },
+    properties: { fips, synthetic: true },
     geometry: {
       type: "Polygon",
       coordinates: [[
