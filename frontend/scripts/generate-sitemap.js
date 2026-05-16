@@ -43,6 +43,17 @@ const industries = [
   ["92", "Public Administration"]
 ];
 
+const legacyConnecticutCounties = [
+  ["09001", "Fairfield County"],
+  ["09003", "Hartford County"],
+  ["09005", "Litchfield County"],
+  ["09007", "Middlesex County"],
+  ["09009", "New Haven County"],
+  ["09011", "New London County"],
+  ["09013", "Tolland County"],
+  ["09015", "Windham County"]
+];
+
 const slugify = (value) => value.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 const urls = [
@@ -66,6 +77,10 @@ for (const [abbr, name] of Object.entries(stateNames)) {
   urls.push([`/state/${slugify(name)}`, "weekly", "0.8"]);
 }
 
+for (const [fips, countyName] of legacyConnecticutCounties) {
+  urls.push([`/county/ct/${slugify(countyName)}-${fips}`, "weekly", "0.75"]);
+}
+
 try {
   const lines = readFileSync(countyFile, "utf8").trim().split(/\r?\n/);
   const headers = lines.shift().split("\t").map((header) => header.trim());
@@ -75,7 +90,7 @@ try {
     const fips = get(row, "GEOID")?.padStart(5, "0");
     const stateAbbr = get(row, "USPS");
     const countyName = get(row, "NAME");
-    if (!fips || !stateAbbr || !countyName || stateAbbr === "PR") continue;
+    if (!fips || !stateAbbr || !countyName || stateAbbr === "CT" || stateAbbr === "PR") continue;
     urls.push([`/county/${stateAbbr.toLowerCase()}/${slugify(countyName)}-${fips}`, "weekly", "0.75"]);
   }
 } catch (error) {

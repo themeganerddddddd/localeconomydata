@@ -11,7 +11,10 @@ def seed_database(force: bool = False) -> None:
     init_db()
     with get_connection() as conn:
         existing = conn.execute("SELECT COUNT(*) AS count FROM counties").fetchone()["count"]
-        if existing >= MIN_FULL_COUNTY_COUNT and not force:
+        has_connecticut_planning_regions = conn.execute(
+            "SELECT 1 FROM counties WHERE fips LIKE '091%' LIMIT 1"
+        ).fetchone()
+        if existing >= MIN_FULL_COUNTY_COUNT and not has_connecticut_planning_regions and not force:
             return
 
         from app.sample_data import ACS, BEA, COUNTIES, LAUS, QCEW

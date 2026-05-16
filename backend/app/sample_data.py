@@ -87,6 +87,18 @@ BASE_COUNTIES.extend(
     ]
 )
 
+LEGACY_CONNECTICUT_COUNTIES = [
+    ("09001", "Fairfield County", "Connecticut", "CT", 957000, 41.227, -73.367, 3.8, 515000, 101200, 1575, 1.8, [("541", 61500, 2240), ("52", 43800, 2210), ("621", 40200, 1220), ("44", 33200, 720), ("72", 28500, 590), ("23", 26200, 1360)]),
+    ("09003", "Hartford County", "Connecticut", "CT", 899000, 41.806, -72.732, 4.1, 476000, 82200, 1435, 1.2, [("52", 53800, 2180), ("62", 61200, 1180), ("541", 45200, 1960), ("31", 28600, 1420), ("44", 31400, 690), ("72", 25200, 560)]),
+    ("09005", "Litchfield County", "Connecticut", "CT", 185000, 41.792, -73.245, 3.6, 99000, 84600, 1190, 0.7, [("62", 9300, 1080), ("23", 7800, 1260), ("44", 6600, 650), ("31", 5200, 1320), ("72", 4800, 540), ("541", 4200, 1580)]),
+    ("09007", "Middlesex County", "Connecticut", "CT", 164000, 41.434, -72.524, 3.4, 91000, 93600, 1285, 1.0, [("62", 8400, 1110), ("541", 6900, 1790), ("31", 5200, 1390), ("44", 5100, 670), ("23", 4600, 1280), ("72", 3900, 550)]),
+    ("09009", "New Haven County", "Connecticut", "CT", 864000, 41.349, -72.900, 4.2, 456000, 75100, 1320, 1.1, [("62", 68500, 1160), ("611", 38800, 1240), ("541", 34200, 1810), ("31", 29500, 1370), ("44", 32600, 680), ("72", 28100, 560)]),
+    ("09011", "New London County", "Connecticut", "CT", 269000, 41.478, -72.103, 3.9, 143000, 77600, 1260, 0.9, [("72", 15200, 610), ("62", 13400, 1090), ("31", 10800, 1410), ("541", 8200, 1710), ("44", 7900, 650), ("92", 7600, 1510)]),
+    ("09013", "Tolland County", "Connecticut", "CT", 149000, 41.858, -72.340, 3.3, 82000, 89700, 1165, 0.8, [("611", 9200, 1180), ("62", 5900, 1060), ("44", 4400, 650), ("23", 3900, 1250), ("541", 3600, 1600), ("72", 3200, 530)]),
+    ("09015", "Windham County", "Connecticut", "CT", 116000, 41.830, -71.987, 4.3, 61000, 67200, 1010, 0.5, [("31", 6200, 1210), ("62", 5400, 1010), ("44", 3600, 620), ("72", 3100, 515), ("23", 2800, 1120), ("611", 2600, 980)]),
+]
+
+
 def _extend_counties_from_gazetteer() -> None:
     """Load every U.S. county name/FIPS from the cached Census gazetteer when present."""
     gazetteer_path = REFERENCE_DIR / "2024_Gaz_counties_national.txt"
@@ -102,7 +114,7 @@ def _extend_counties_from_gazetteer() -> None:
             row = {key.strip(): value.strip() for key, value in raw_row.items() if key}
             fips = str(row["GEOID"]).zfill(5)
             state_abbr = row["USPS"]
-            if fips in existing or state_abbr == "PR":
+            if fips in existing or state_abbr in {"CT", "PR"}:
                 continue
 
             seed = int(fips)
@@ -132,6 +144,9 @@ def _extend_counties_from_gazetteer() -> None:
 
 
 _extend_counties_from_gazetteer()
+BASE_COUNTIES = [county for county in BASE_COUNTIES if not (county[3] == "CT" and county[0].startswith("091"))]
+existing_fips = {county[0] for county in BASE_COUNTIES}
+BASE_COUNTIES.extend([county for county in LEGACY_CONNECTICUT_COUNTIES if county[0] not in existing_fips])
 
 INDUSTRY_TITLES = {
     "10": "Total, all industries",
