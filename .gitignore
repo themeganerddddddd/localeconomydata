@@ -1,25 +1,15 @@
-# Python
-.venv/
-__pycache__/
-*.py[cod]
-.pytest_cache/
+# Dependencies and builds
+node_modules/
+.next/
+out/
+dist/
 
-# Node / Vite
-frontend/node_modules/
-frontend/dist/
-frontend/.vite/
-
-# Local data and generated outputs
-backend/app/data/raw/
-backend/app/data/processed/
-backend/app/data/geo/
-*.db
-*.sqlite
-*.log
-
-# Environment and OS files
+# Local environment
 .env
 .env.local
-frontend/.env.local
+.env*.local
+
+# Generated and system files
+*.log
 Thumbs.db
 .DS_Store
