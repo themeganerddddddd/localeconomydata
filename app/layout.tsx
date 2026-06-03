@@ -11,6 +11,15 @@ export const metadata: Metadata = {
     template: "%s | LocalEconomyData"
   },
   description: "Compare county-level workforce, industry, cost, and market indicators to evaluate business expansion opportunities."
+  ,
+  icons: {
+    icon: [
+      { url: "/logo.png", type: "image/png" },
+      { url: "/favicon.svg", type: "image/svg+xml" }
+    ],
+    shortcut: "/logo.png",
+    apple: "/logo.png"
+  }
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
