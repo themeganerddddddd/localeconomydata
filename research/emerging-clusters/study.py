@@ -164,7 +164,8 @@ def add_lags(frame,h):
       base.future_emp.notna()&base.future_est.notna()&base.future_lq.notna()&
       base.county_emp.gt(0)
     ].copy()
-    # Controlled comparison: all original label requirements retained; only future LQ 1.25 -> 2.0.\n    base["event"]=(
+    # Controlled comparison: all original label requirements retained; only future LQ 1.25 -> 2.0.
+    base["event"]=(
       base.future_lq.ge(2.0)&base.future_emp.ge(200)&
       (base.future_emp-base.emp).ge(100)&
       base.future_emp.ge(base.emp*1.20)&
