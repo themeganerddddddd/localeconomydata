@@ -145,6 +145,9 @@ def permit_panel():
     r["mean_"+label]=val.mean()
   return pd.Series(r)
  x=d.groupby(["city","county_fips","year"],dropna=False).apply(summary,include_groups=False).reset_index()
+ if "level_3" in x.columns:
+  x=x.pivot(index=["city","county_fips","year"],columns="level_3",values=0).reset_index()
+  x.columns.name=None
  x=x.merge(qa,on=["city","county_fips","year"],how="left")
  x.to_csv(OUT/"permit_geography_year.csv",index=False)
  qa.to_csv(OUT/"permit_quality.csv",index=False)
