@@ -1,0 +1,8 @@
+model,three_year_direct_firm_mae_pp,three_year_direct_firm_error_gain_pct
+Economic baseline,0.6890395689,0
+Plus housing,0.6444702640,6.468323
+Plus education,0.7105105119,-3.116068
+Education + housing,0.6636415786,3.685999
+Education x affordability,0.6606067506,4.126442
+Plus jobs mix,0.6935795470,-0.658885
+All candidate groups,0.6639955862,3.634622
