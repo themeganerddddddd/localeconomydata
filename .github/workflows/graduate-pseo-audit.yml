@@ -1,0 +1,28 @@
+name: Public graduate retention PSEO source audit
+on:
+  push:
+    branches: [research/graduate-housing-labor-national-2026]
+  pull_request:
+    branches: [main]
+    paths:
+      - "research/graduate-retention/**"
+      - ".github/workflows/graduate-pseo-audit.yml"
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install pandas requests
+      - run: python -u research/graduate-retention/pseo_retention_national.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: graduate-retention-38-state-actual-employment
+          path: research/graduate-retention/out/pseo_*.csv*
+          if-no-files-found: ignore

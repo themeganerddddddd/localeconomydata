@@ -1,0 +1,25 @@
+name: Audit actual Census business births and startup records
+on:
+  push:
+    branches: [research/graduate-housing-labor-national-2026]
+  pull_request:
+    branches: [main]
+    paths: ['research/business-formation/**','.github/workflows/business-birth-audit.yml']
+permissions: {contents: read}
+jobs:
+  births:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install pandas requests openpyxl
+      - run: python -u research/business-formation/audit_births.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: census-bds-new-business-outcomes
+          path: research/business-formation/out/
+          if-no-files-found: ignore

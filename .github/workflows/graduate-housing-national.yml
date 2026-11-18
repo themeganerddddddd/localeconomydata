@@ -1,0 +1,33 @@
+name: Nationwide degree production, housing affordability and job alignment research
+on:
+  push:
+    branches:
+      - research/graduate-housing-labor-national-2026
+  pull_request:
+    branches: [main]
+    paths:
+      - "research/graduate-retention/**"
+      - ".github/workflows/graduate-housing-national.yml"
+permissions:
+  contents: read
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install open-source data dependencies
+        run: python -m pip install --disable-pip-version-check pandas numpy requests openpyxl
+      - name: Collect official nationwide historical panel
+        run: python -u research/graduate-retention/national_panel.py
+      - name: Upload county and CBSA panel source manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: national-graduates-housing-employment-panels
+          path: research/graduate-retention/out/
+          retention-days: 30
+          if-no-files-found: ignore
