@@ -46,7 +46,7 @@ def get_cbp():
             df["year"]=year
             df["emp"]=pd.to_numeric(df["emp"],errors="coerce")
             df["est"]=pd.to_numeric(df["est"],errors="coerce")
-            code=df["naics"].str.strip()
+            code=df["naics"].astype(str).str.strip()
             total=df[code.eq("------")][["county","year","emp"]].rename(columns={"emp":"county_emp"})
             total=total.drop_duplicates(["county","year"])
             d=df[code.str.fullmatch(r"\d{3}[/\\-]{3}|\d{3}",na=False)].copy()
@@ -88,7 +88,7 @@ def get_patents():
         v=pd.read_excel(book,sheet_name=sheet,header=3)
         code=v.columns[0]
         v=v[v[code].astype(str).str.fullmatch(r"us-[a-z]{2}-\d{3}")].copy()
-        v["county"]=v[code].astype(str).map(lambda z: STATE.get(z[3:5],"00")+z[-3:])
+        v["county"]=v[code].astype(str).map(lambda z: STATE.get(z[3:5].upper(),"00")+z[-3:])
         years=[c for c in v.columns if str(c).replace(".0","").isdigit() and 2002<=int(float(c))<=2020]
         v=v.melt(id_vars="county",value_vars=years,var_name="year",value_name="patents")
         v["year"]=v["year"].astype(int)
@@ -119,7 +119,7 @@ def add_lags(frame,h):
     y=y.rename(columns={"emp":"future_emp","est":"future_est","lq":"future_lq"})
     base=base.merge(y,on=["county","year","industry"],how="left",sort=False)
     base=base[base["year"].between(2008,2023-h)].copy()
-    # Pre-registered-ish operational outcome: new specialization from below LQ 1.1,
+    # Operational outcome: new specialization from below LQ 1.1,
     # plus material job growth, establishments, and a substantial future LQ.
     base=base[
       base.emp.ge(50)&base.est.ge(3)&base.lq.between(.35,1.10,inclusive="left")&
