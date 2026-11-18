@@ -137,7 +137,7 @@ def permit_panel():
      "p90_days":g.days.quantile(.9),"p95_days":g.days.quantile(.95),
      "over90_share":(g.days>90).mean(),"over180_share":(g.days>180).mean(),
      "same_day_share":(g.days<1).mean()}
-  if g.city.iloc[0]=="Seattle":
+  if g.name[0]=="Seattle":
    for c,label in [("daysplanreviewcity","gov_review"),("daysoutcorrections","applicant_corrections"),("numberreviewcycles","review_cycles")]:
     val=pd.to_numeric(g[c],errors="coerce").where(lambda x:x.between(0,3650))
     r["n_"+label]=int(val.notna().sum())
