@@ -42,7 +42,7 @@ def get_cbp():
                     usecols=lambda col: col.lower() in {"fipstate","fipscty","naics","emp","est"},
                     low_memory=False,encoding="latin-1")
             df.columns=df.columns.str.lower()
-            df["county"]=df["fipstate"].str.zfill(2)+df["fipscty"].str.zfill(3)
+            df["county"]=df["fipstate"].astype(str).str.zfill(2)+df["fipscty"].astype(str).str.zfill(3)
             df["year"]=year
             df["emp"]=pd.to_numeric(df["emp"],errors="coerce")
             df["est"]=pd.to_numeric(df["est"],errors="coerce")
@@ -196,7 +196,7 @@ def run():
                      "counties":int(cbp.county.nunique()),"source_patent_books":pat_titles},
              "runs":[]}
     allpred=[]
-    for h,origins in [(3,[2018,2019,2020]),(5,[2016,2017,2018])]:
+    for h,origins in [(3,[2014,2015,2016,2017,2018,2019,2020]),(5,[2015,2016,2017,2018])]:
         frame=add_lags(cbp,h)
         frame=frame.merge(pats[["county","year",*pat_feats,"patent_prev_3yr"]],on=["county","year"],how="left",sort=False)
         norm=frame.county_emp.clip(lower=100)
