@@ -1,0 +1,29 @@
+name: Extended permitting GDP employment establishments
+on:
+  push:
+    branches:
+      - research/permits-gdp-panel-2026
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  extended-study:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install analysis stack
+        run: python -m pip install pandas numpy requests scipy statsmodels scikit-learn matplotlib
+      - name: Collect official multi-jurisdiction data
+        run: python research/permit-gdp/extended_panel.py
+      - name: Upload source, QA, linked panel
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: permits-gdp-qcew-extended
+          path: research/permit-gdp/out/
+          if-no-files-found: ignore
