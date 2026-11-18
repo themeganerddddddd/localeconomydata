@@ -1,8 +1,8 @@
-name: Emerging Industry Clusters Research
+name: Emerging Industry Clusters (LQ 2.0)
 on:
   push:
     branches:
-      - research/emerging-industry-clusters-2026
+      - research/emerging-clusters-lq2-2026
   pull_request:
     branches:
       - main
@@ -27,6 +27,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: emerging-clusters-results
+          name: emerging-clusters-lq2-results
           path: research/emerging-clusters/out/
           if-no-files-found: ignore
