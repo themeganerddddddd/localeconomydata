@@ -3,6 +3,12 @@ on:
   push:
     branches:
       - research/permits-gdp-panel-2026
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "research/permit-gdp/**"
+      - ".github/workflows/permit-gdp-panel.yml"
 permissions:
   contents: read
 jobs:
