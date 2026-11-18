@@ -87,7 +87,7 @@ def permits():
                  "mean_days":round(float(d.days.mean()),2),
                  "over90_days":round(float((d.days>90).mean()),5)}
             if city=="Seattle":
-                val=pd.to_numeric(d.get("daysplanreviewcity"),errors="coerce")
+                val=pd.to_numeric(d["daysplanreviewcity"],errors="coerce") if "daysplanreviewcity" in d.columns else pd.Series(dtype=float)
                 out["median_city_review_days"]=round(float(val.median()),2) if val.notna().sum()>5 else None
             recs.append(out)
             print("PANEL",json.dumps(out),flush=True)
