@@ -1,0 +1,30 @@
+name: Audit expanded permit + QCEW sources
+on:
+  push:
+    branches:
+      - research/permits-gdp-panel-2026
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "research/permit-gdp/**"
+      - ".github/workflows/permit-gdp-expansion-audit.yml"
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install requests pandas numpy scipy statsmodels matplotlib
+      - run: python research/permit-gdp/expansion_audit.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: expanded-permits-source-audit
+          path: research/permit-gdp/out/expansion_source_schema.json
+          if-no-files-found: ignore
