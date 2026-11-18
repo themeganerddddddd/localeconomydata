@@ -32,7 +32,7 @@ def fetch(url):
 
 def get_cbp():
     parts=[]; meta={}
-    for year in range(2006,2024):
+    for year in range(1998,2024):
         url=f"https://www2.census.gov/programs-surveys/cbp/datasets/{year}/cbp{year%100:02d}co.zip"
         try:
             body=fetch(url)
@@ -89,7 +89,7 @@ def get_patents():
         code=v.columns[0]
         v=v[v[code].astype(str).str.fullmatch(r"us-[a-z]{2}-\d{3}")].copy()
         v["county"]=v[code].astype(str).map(lambda z: STATE.get(z[3:5].upper(),"00")+z[-3:])
-        years=[c for c in v.columns if str(c).replace(".0","").isdigit() and 2002<=int(float(c))<=2020]
+        years=[c for c in v.columns if str(c).replace(".0","").isdigit() and 1998<=int(float(c))<=2020]
         v=v.melt(id_vars="county",value_vars=years,var_name="year",value_name="patents")
         v["year"]=v["year"].astype(int)
         column="patent_total" if n==0 else f"patent_tech_{n:02d}"
@@ -118,7 +118,7 @@ def add_lags(frame,h):
     y["year"]-=h
     y=y.rename(columns={"emp":"future_emp","est":"future_est","lq":"future_lq"})
     base=base.merge(y,on=["county","year","industry"],how="left",sort=False)
-    base=base[base["year"].between(2008,2023-h)].copy()
+    base=base[base["year"].between(2000,2023-h)].copy()
     # Operational outcome: new specialization from below LQ 1.1,
     # plus material job growth, establishments, and a substantial future LQ.
     base=base[
@@ -196,7 +196,7 @@ def run():
                      "counties":int(cbp.county.nunique()),"source_patent_books":pat_titles},
              "runs":[]}
     allpred=[]
-    for h,origins in [(3,[2014,2015,2016,2017,2018,2019,2020]),(5,[2015,2016,2017,2018])]:
+    for h,origins in [(3,[2014,2015,2016,2017,2018,2019,2020]),(5,[2015,2016,2017,2018]),(10,[2011,2012,2013])]:
         frame=add_lags(cbp,h)
         frame=frame.merge(pats[["county","year",*pat_feats,"patent_prev_3yr"]],on=["county","year"],how="left",sort=False)
         norm=frame.county_emp.clip(lower=100)
@@ -209,7 +209,7 @@ def run():
         features_all=BASE+CAT+pat_features
         for origin in origins:
             # At forecast origin 'origin', only use training labels ending by 'origin-1'.
-            tr=frame[(frame.year>=2008)&(frame.year<=origin-h-1)].copy()
+            tr=frame[(frame.year>=2000)&(frame.year<=origin-h-1)].copy()
             te=frame[frame.year.eq(origin)].copy()
             if tr.empty or te.empty or tr.event.sum()<30 or te.event.sum()<8:
                 print("INSUFFICIENT_EVENTS",h,origin,len(tr),len(te),int(tr.event.sum()),int(te.event.sum()),flush=True)
