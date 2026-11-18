@@ -1,4 +1,4 @@
-"""Real-data U.S. county x NAICS-3 industry cluster emergence forecast backtest.
+"""Stricter LQ >= 2.0 real-data county-industry emergence forecast backtest.
 Public Census CBP 2006-2023 + NSF NCSES county/technology patents (grants 1998-2022).
 All validation is out-of-time; labels used for fitting end before the prediction origin.
 """
@@ -164,8 +164,8 @@ def add_lags(frame,h):
       base.future_emp.notna()&base.future_est.notna()&base.future_lq.notna()&
       base.county_emp.gt(0)
     ].copy()
-    base["event"]=(
-      base.future_lq.ge(1.25)&base.future_emp.ge(200)&
+    # Controlled comparison: all original label requirements retained; only future LQ 1.25 -> 2.0.\n    base["event"]=(
+      base.future_lq.ge(2.0)&base.future_emp.ge(200)&
       (base.future_emp-base.emp).ge(100)&
       base.future_emp.ge(base.emp*1.20)&
       (base.future_est-base.est).ge(2)
