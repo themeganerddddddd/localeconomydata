@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: python -m pip install requests
+      - run: python -m pip install pandas requests
       - run: python -u research/graduate-retention/pseo_sample_schema.py
       - uses: actions/upload-artifact@v4
         if: always()
