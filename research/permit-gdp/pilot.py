@@ -97,7 +97,7 @@ def gdp():
     r=sess.get(url,timeout=120);r.raise_for_status()
     z=zipfile.ZipFile(io.BytesIO(r.content))
     name=next(n for n in z.namelist() if "ALL_AREAS" in n and n.endswith(".csv"))
-    raw=pd.read_csv(z.open(name),dtype=str,encoding="utf-8-sig",low_memory=False)
+    raw=pd.read_csv(z.open(name),dtype=str,encoding="latin-1",low_memory=False)
     raw.columns=raw.columns.str.strip()
     raw["GeoFIPS"]=raw.GeoFIPS.astype(str).str.strip().str.strip('"').str.zfill(5)
     raw=raw[(raw["GeoFIPS"].isin([x[2] for x in DATA.values()]))&(raw.LineCode.eq("1"))]
