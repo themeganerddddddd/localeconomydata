@@ -76,6 +76,43 @@ def get_cbp():
     industry["state"]=industry.county.str[:2]
     diversity=industry.assign(active=industry.emp.ge(100).astype(np.int8)).groupby(["county","year"],as_index=False).active.sum().rename(columns={"active":"industry_diversity"})
     industry=industry.merge(diversity,on=["county","year"],how="left")
+    # Signal 1: relatedness density estimated using only 1998-2000 historical co-location.
+    # Keep the relatedness graph entirely independent of outcomes after 2000.
+    reference=industry[industry.year.between(1998,2000)].copy()
+    present=(reference.assign(present=reference.lq.ge(1.0).astype("float32"))
+             .groupby(["county","industry"],observed=True).present.max()
+             .unstack(fill_value=0).astype("float32"))
+    cols=present.columns
+    mat=present.to_numpy(dtype=np.float32)
+    cooc=mat.T@mat
+    n=mat.sum(axis=0).clip(min=1)
+    related=np.minimum(cooc/n[:,None],cooc/n[None,:])
+    related[(n<12),:]=0
+    related[:,(n<12)]=0
+    np.fill_diagonal(related,0)
+    # Only the eight strongest related industries count toward density.
+    for i in range(len(cols)):
+        row=related[i]; keep=np.argpartition(row,-min(8,len(row)))[-min(8,len(row)):]
+        drop=np.ones(len(row),dtype=bool);drop[keep]=False;row[drop]=0
+    all_present=(industry.pivot_table(index=["county","year"],columns="industry",values="lq",aggfunc="first")
+                 .reindex(columns=cols).fillna(0).ge(1).astype("float32"))
+    den=all_present.to_numpy(dtype=np.float32)@related.T
+    denom=related.sum(axis=1).clip(min=1e-7)
+    density=(pd.DataFrame(den/denom,index=all_present.index,columns=cols)
+             .stack().rename("relatedness_density").reset_index())
+    industry=industry.merge(density,on=["county","year","industry"],how="left")
+    # Signal 2: same-industry specialization among *other* counties in the same state.
+    state_totals=(cy.assign(state=cy.county.str[:2]).groupby(["state","year"],as_index=False)
+                  .county_emp.sum().rename(columns={"county_emp":"state_emp"}))
+    state_ind=(industry.groupby(["state","year","industry"],as_index=False).emp.sum()
+               .rename(columns={"emp":"state_ind_emp"}))
+    industry=industry.merge(state_totals,on=["state","year"],how="left").merge(
+       state_ind,on=["state","year","industry"],how="left")
+    numerator=(industry.state_ind_emp-industry.emp).clip(lower=0)
+    denominator=(industry.state_emp-industry.county_emp).clip(lower=1)
+    industry["state_peer_lq"]=((numerator/denominator)/industry.us_ind_share.clip(lower=1e-9)).clip(0,25)
+    print("ADDITIONAL_SIGNALS",{"relatedness_pairs":int((related>0).sum()),
+       "density_nonzero":int((industry.relatedness_density>0).sum()),"state_peer_rows":int(industry.state_peer_lq.notna().sum())},flush=True)
     industry=industry.replace([np.inf,-np.inf],np.nan)
     return industry,meta
 
@@ -206,7 +243,9 @@ def run():
             frame[c]=np.log1p(10000*frame[c].fillna(0)/norm).astype("float32")
         frame=frame.drop(columns=["patent_total_3yr","patent_prev_3yr"])
         pat_features=["patents_rate_3yr","patents_acceleration",*pat_feats[1:]]
-        features_all=BASE+CAT+pat_features
+        related_features=["relatedness_density"]
+        regional_features=["state_peer_lq"]
+        features_all=BASE+CAT+pat_features+related_features+regional_features
         for origin in origins:
             # At forecast origin 'origin', only use training labels ending by 'origin-1'.
             tr=frame[(frame.year>=2000)&(frame.year<=origin-h-1)].copy()
@@ -221,8 +260,13 @@ def run():
             row={"horizon":h,"origin":origin,"train_n":len(tr),"test_n":len(te),
                  "train_events":int(tr.event.sum()),"test_events":int(te.event.sum()),"models":{}}
             # Four cells: incremental information, added model flexibility, and their interaction.
-            for data_label,cols in [("traditional",BASE+CAT),("innovation",features_all)]:
-                for method in ["logit","gbdt"]:
+            for data_label,cols,methods in [
+              ("traditional",BASE+CAT,["logit","gbdt"]),
+              ("patents",BASE+CAT+pat_features,["gbdt"]),
+              ("relatedness",BASE+CAT+related_features,["gbdt"]),
+              ("state_peers",BASE+CAT+regional_features,["gbdt"]),
+              ("combined",features_all,["logit","gbdt"])]:
+                for method in methods:
                     key=data_label+"_"+method
                     tick=time.monotonic()
                     score,imp=fitted_scores(tr,te,cols,method)
@@ -240,7 +284,8 @@ def run():
     for h,g in preds.groupby("horizon"):
         agg={"horizon":int(h),"n":len(g),"events":int(g.event.sum()),"outcome_rate":round(g.event.mean(),6),
              "origins":sorted(map(int,g.year.unique().tolist()))}
-        for key in ["traditional_logit","innovation_logit","traditional_gbdt","innovation_gbdt"]:
+        for key in ["traditional_logit","traditional_gbdt","patents_gbdt","relatedness_gbdt",
+                    "state_peers_gbdt","combined_logit","combined_gbdt"]:
             # Evaluate mean of by-origin metrics to avoid cross-origin probability shifts.
             origin_metrics=[metrics(x.event,x[key]) for _,x in g.groupby("year")]
             agg[key]={metric:round(float(np.mean([m[metric] for m in origin_metrics])),5)
