@@ -19,10 +19,10 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -m pip install pandas requests
-      - run: python -u research/graduate-retention/pseo_sample_schema.py
+      - run: python -u research/graduate-retention/pseo_retention_national.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: graduate-retention-pseo-source-audit
-          path: research/graduate-retention/out/pseo_state_availability.json
+          name: graduate-retention-38-state-actual-employment
+          path: research/graduate-retention/out/pseo_*.csv*
           if-no-files-found: ignore
