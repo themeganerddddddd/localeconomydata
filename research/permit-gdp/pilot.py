@@ -38,3 +38,25 @@ try:
 except Exception as ex:
     print("BEA_FAIL",repr(ex),flush=True);out["bea"]={"error":repr(ex)}
 (OUT/"source_audit.json").write_text(json.dumps(out,indent=2))
+
+
+print("CATEGORY_DISTRIBUTIONS_START",flush=True)
+datasets={
+"Chicago":("data.cityofchicago.org","ydr8-5enu","issue_date","permit_type","application_start_date"),
+"Seattle":("data.seattle.gov","76t5-zqzr","issueddate","permittypemapped","applieddate"),
+"San Francisco":("data.sfgov.org","i98e-djp9","issued_date","permit_type_definition","filed_date"),
+"Austin":("data.austintexas.gov","3syk-w9eu","issue_date","permit_class_mapped","applieddate")
+}
+for c,(host,id,dt,typ,applied) in datasets.items():
+    base=f"https://{host}/resource/{id}.json"
+    where=f"{dt} between '2022-01-01T00:00:00' and '2022-12-31T23:59:59'"
+    params={"$select":f"{typ}, count(*) as n, count({applied}) as appl_count","$where":where,"$group":typ,"$order":"n desc","$limit":"20"}
+    try:
+        r=session.get(base,params=params,timeout=120)
+        print("CATEGORY",c,r.status_code,r.text[:3000],flush=True)
+    except Exception as e:print("CATEGORY_FAIL",c,repr(e),flush=True)
+    params={"$select":f"{typ}, {applied}, {dt}","$where":where,"$limit":"4"}
+    try:
+        r=session.get(base,params=params,timeout=60)
+        print("SAMPLE",c,r.status_code,r.text[:1700],flush=True)
+    except Exception as e:print("SAMPLE_FAIL",c,repr(e),flush=True)
